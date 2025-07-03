@@ -1,0 +1,84 @@
+﻿
+@page "/add-todo"
+@inject HttpClient Http
+
+<h3>Add New Todo</h3>
+
+<EditForm Model="@newTodo" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label>Description</label>
+        <InputText class="form-control" @bind-Value="newTodo.Description" />
+    </div>
+
+    <div class="form-group">
+        <label>Title</label>
+        <InputText class="form-control" @bind-Value="newTodo.Title" />
+    </div>
+
+    <div class="form-group">
+        <label>Completed</label>
+        <InputSelect class="form-control" @bind-Value="newTodo.IsCompleted">
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+        </InputSelect>
+    </div>
+
+    <div class="form-group">
+        <label>Priority</label>
+        <InputSelect class="form-control" @bind-Value="newTodo.Priority">
+            <option value="">-- Select --</option>
+            @for (int i = 1; i <= 5; i++)
+            {
+                <option value="@i">@i</option>
+            }
+        </InputSelect>
+    </div>
+    <div class="form-group">
+        <label>Created Date</label>
+        <InputDate class="form-control" @bind-Value="newTodo.CreatedDate" />
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">Submit</button>
+</EditForm>
+
+@if (successMessage != null)
+{
+    <div class="alert alert-success mt-3">@successMessage</div>
+}
+
+@code {
+    private Todos newTodo = new()
+        {
+            CreatedDate = DateTime.Now
+        };
+
+    private string? successMessage;
+
+    private async Task HandleValidSubmit()
+    {
+        var response = await Http.PostAsJsonAsync("https://localhost:7230/api/Todo", newTodo);
+        if (response.IsSuccessStatusCode)
+        {
+            successMessage = "Todo created successfully!";
+            newTodo = new() { CreatedDate = DateTime.Now }; // Reset form
+        }
+        else
+        {
+            successMessage = "Failed to create todo.";
+        }
+    }
+
+    public class Todos
+    {
+        public int Id { get; set; }
+        public string? Title { get; set; }
+        public string? Description { get; set; }
+        public bool IsCompleted { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public DateTime? CompletedDate { get; set; }
+        public int? Priority { get; set; }
+        public int? UserId { get; set; }
+    }
+}

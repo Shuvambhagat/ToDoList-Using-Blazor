@@ -1,0 +1,145 @@
+﻿@page "/edit/{Id:int}"
+@using System.Net.Http.Json
+@inject IJSRuntime JS
+@inject HttpClient Http
+
+<h3>Edit Todo</h3>
+
+<EditForm Model="@editTodo" OnValidSubmit="ConfirmAndSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label>Title</label>
+        <InputText class="form-control" @bind-Value="editTodo.Title" />
+    </div>
+
+    <div class="form-group">
+        <label>Description</label>
+        <InputText class="form-control" @bind-Value="editTodo.Description" />
+    </div>
+
+    <div class="form-group">
+        <label>Is Completed</label>
+        <InputSelect class="form-control" @bind-Value="editTodo.IsCompleted">
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+        </InputSelect>
+    </div>
+
+    <div class="form-group">
+        <label>Priority</label>
+        <InputSelect class="form-control" @bind-Value="editTodo.Priority">
+            <option value="">-- Select --</option>
+            @for (int i = 0; i <= 5; i++)
+            {
+                <option value="@i">@i</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="form-group">
+        <label>Created Date</label>
+        <InputDate class="form-control" @bind-Value="editTodo.CreatedDate" />
+    </div>
+
+    <div class="form-group">
+        <label>Due Date</label>
+        <InputDate class="form-control" @bind-Value="editTodo.DueDate" />
+    </div>
+
+    <div class="form-group">
+        <label>Completed Date</label>
+        <InputDate class="form-control" @bind-Value="editTodo.CompletedDate" />
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Update Todo</button>
+</EditForm>
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <div class="alert alert-success mt-3">@successMessage</div>
+}
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger mt-3">@errorMessage</div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Todos editTodo = new();
+    private string? successMessage;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await Http.GetFromJsonAsync<Todos>($"https://localhost:7230/api/Todo/{Id}");
+            if (result != null)
+            {
+                editTodo = result;
+            }
+            else
+            {
+                errorMessage = $"Todo with ID {Id} not found.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load todo: {ex.Message}";
+        }
+    }
+    private async Task ConfirmAndSubmit()
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirmUpdate");
+        if (confirmed)
+        {
+            await HandleValidSubmit(); 
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+
+        var response = await Http.PutAsJsonAsync($"https://localhost:7230/api/Todo/{Id}", editTodo);
+        if (response.IsSuccessStatusCode)
+        {
+            successMessage = "Todo updated successfully!";
+            errorMessage = null;
+        }
+        else
+        {
+            successMessage = null;
+            errorMessage = "Failed to update todo.";
+        }
+    }
+
+    public class Todos
+    {
+        public int Id { get; set; }
+
+        public string? Title { get; set; }
+
+        public string? Description { get; set; }
+
+        public bool IsCompleted { get; set; }
+
+        public DateTime CreatedDate { get; set; }
+
+        public DateTime? CompletedDate { get; set; }
+
+        public DateTime? DueDate { get; set; }
+
+        public int? Priority { get; set; }
+
+        public int? UserId { get; set; }
+    }
+}
+
+<script>
+    window.confirmUpdate = function () {
+        return confirm("Are you sure you want to update this todo?");
+    };
+</script>

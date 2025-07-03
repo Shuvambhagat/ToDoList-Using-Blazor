@@ -1,0 +1,115 @@
+﻿@page "/todos"
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+
+
+<h3>To-Do List</h3>
+
+<p>
+    <NavLink class="btn btn-primary" href="/add-todo">Add New To-Do List</NavLink>
+</p>
+<p>
+    <button class="btn btn-warning" @onclick="NavigateToEdit" disabled="@(!selectedId.HasValue)">Edit Selected To-Do</button>
+</p>
+<p>
+    <button class="btn btn-danger" @onclick="DeleteSelectedTodo" disabled="@(!selectedId.HasValue)">Delete To-Do</button>
+</p>
+
+
+@if (todoList == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Select</th>
+                <th>Id</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Completed</th>
+                <th>Priority</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var todo in todoList)
+            {
+                <tr>
+                    <td>
+                        <input type="radio"
+                               class="form-check-input"
+                               name="selectedTodo"
+                               @onclick="@(() => SelectTodo(todo.Id))"
+                               checked="@(selectedId == todo.Id)" />
+                    </td>
+                    <td>@todo.Id</td>
+                    <td>@todo.Title</td>
+                    <td>@todo.Description</td>
+                    <td>@(todo.IsCompleted ? "Yes" : "No")</td>
+                    <td>@todo.Priority</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Todos>? todoList;
+    private int? selectedId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        todoList = await Http.GetFromJsonAsync<List<Todos>>("api/Todo");
+    }
+
+    private void SelectTodo(int id)
+    {
+        selectedId = id;
+    }
+
+    private void NavigateToEdit()
+    {
+        if (selectedId.HasValue)
+        {
+            NavManager.NavigateTo($"/edit/{selectedId.Value}");
+        }
+    }
+    private async Task DeleteSelectedTodo()
+    {
+        if (selectedId.HasValue)
+        {
+            var confirmed = await JS.InvokeAsync<bool>("confirm", $"Are you sure you want to delete To-Do with ID {selectedId.Value}?");
+            if (!confirmed)
+                return;
+
+            var response = await Http.DeleteAsync($"api/Todo/{selectedId.Value}");
+            if (response.IsSuccessStatusCode)
+            {
+                // Refresh the list
+                todoList = await Http.GetFromJsonAsync<List<Todos>>("api/Todo");
+                selectedId = null;
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", $"Failed to delete To-Do. Status: {response.StatusCode}");
+            }
+        }
+    }
+
+
+    public class Todos
+    {
+        public int Id { get; set; }
+        public string? Title { get; set; }
+        public string? Description { get; set; }
+        public bool IsCompleted { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public DateTime? CompletedDate { get; set; }
+        public int? Priority { get; set; }
+        public int? UserId { get; set; }
+    }
+
+}
