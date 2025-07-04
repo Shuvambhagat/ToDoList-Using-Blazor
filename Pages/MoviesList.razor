@@ -1,0 +1,41 @@
+﻿@page "/movielist"
+@inject HttpClient Http;
+@using BlazorBootstrap;
+<h3>MoviesList</h3>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">SI</th>
+            <th scope="col">Movie Name</th>
+            <th scope="col">Genre</th>
+            <th scope="col">Images</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th scope="row">1</th>
+            <td>Mark</td>
+            <td>Otto</td>
+            <td></td>
+        </tr>
+        <tr>
+            <th scope="row">2</th>
+            <td>Jacob</td>
+            <td>Thornton</td>
+            <td></td>
+        </tr>
+        <tr>
+            <th scope="row">3</th>
+            <td colspan="2">Larry the Bird</td>
+            <td></td>
+        </tr>
+    </tbody>
+</table>
+
+
+
+@code {
+
+}

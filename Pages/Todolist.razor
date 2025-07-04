@@ -88,7 +88,6 @@ else
             var response = await Http.DeleteAsync($"api/Todo/{selectedId.Value}");
             if (response.IsSuccessStatusCode)
             {
-                // Refresh the list
                 todoList = await Http.GetFromJsonAsync<List<Todos>>("api/Todo");
                 selectedId = null;
             }
